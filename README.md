@@ -7,13 +7,19 @@ FutHub Fantasy Football is a comprehensive fantasy soccer platform that allows u
 ## Features
 
 - **Dark-Themed Interface**: Professional Fantrax-inspired UI with intuitive sidebar navigation
-- **Multi-League Support**: Select from EPL, La Liga, Bundesliga, Serie A, and Ligue 1 with extensible architecture for future leagues
-- **League Selection Dashboard**: Pick your fantasy football (soccer) league from the 5 major European competitions
-- **Authentication Ready**: Log In and Sign Up buttons prepared for future authentication implementation
-- **Private Group Leagues**: (Coming soon) Invite friends and manage custom scoring rules and roster formats
+- **Multi-League Support**: Select from EPL, La Liga, Bundesliga, Serie A, and Ligue 1
+- **League Creation Wizard**: 3-step process to create fantasy leagues
+  - Step 1: Select competition (5 European leagues available)
+  - Step 2: Choose league type (H2H - Points)
+  - Step 3: Enter basic settings (league name, team name, format, draft type)
+- **League Type - H2H Points**: Head-to-head fantasy matchups with points-based scoring
+- **Local Storage**: Leagues persist across browser sessions
+- **Authentication Ready**: Log In and Sign Up buttons prepared for future implementation
+- **Join League**: (Coming soon) Join existing leagues with invite codes
+- **Private Group Leagues**: (Coming soon) Invite friends and customize league settings
 - **Real-Time Data**: (Coming soon) Live player stats, match scores, and injury updates from WhoScored.com
-- **Advanced Analytics**: (Coming soon) Predictive player performance models, matchup analysis, and trend forecasting
-- **Smart Draft Assistant**: (Coming soon) Draft and free agent list player recommendations based on value projections
+- **Advanced Analytics**: (Coming soon) Predictive player performance models and matchup analysis
+- **Smart Draft Assistant**: (Coming soon) AI-powered draft recommendations
 - **Custom Scoring**: (Coming soon) Flexible scoring categories and roster configurations
 - **Mobile-Responsive**: Fully optimized for desktop, tablet, and mobile devices
 
@@ -28,24 +34,47 @@ FutHub Fantasy Football is a comprehensive fantasy soccer platform that allows u
 
 ## Development Milestones
 
-### Milestone 1: League Selection Interface ✅
-**Testable Feature**: Users can view a Fantrax-inspired dark-themed interface with a sidebar navigation panel and select from 5 major European football competitions (English Premier League, Spanish La Liga, Bundesliga, Italian Serie A, French Ligue 1). The interface includes Log In and Sign Up buttons (placeholders) that are ready for future authentication implementation.
+### Milestone 1: League Selection & Creation ✅
+**Testable Feature**: Users can view a Fantrax-inspired dark-themed interface, select from 5 major European football competitions, and create a new fantasy league with a streamlined 3-step process. The system includes league type selection (H2H - Points) and basic configuration (league name, team name, league format, and draft type).
 
 **How to Test**:
-- Open the app to see the FutHub Fantasy Football dark interface
-- Verify the left sidebar displays with:
-  - Guest User profile section
-  - **Log In** button (blue) - placeholder for future authentication
-  - **Sign Up** button (gray) - placeholder for future authentication
-  - Profile section (Profile, Account, Security, Devices - all placeholders)
-  - Games section (Season-Long, Cash Games, Mock Draft, Public Leagues - all placeholders)
-  - Other section (Forums, Support, FAQ, Treasurer, Player Search, FutHub Home, Terms - all placeholders)
-- View the "Pick your fantasy football (soccer) league" heading in the main content area
-- See 5 league selection cards (EPL, La Liga, Bundesliga, Serie A, Ligue 1)
-- Click on any league card to select it
-- Verify a confirmation message appears showing your selection
-- Hover over league cards to see the interactive hover effects
-- Note: Authentication and league creation will be implemented in future milestones
+1. **League Selection**:
+   - Open the app to see the FutHub Fantasy Football dark interface
+   - View the "Pick your fantasy football (soccer) league" heading
+   - See 5 league selection cards (EPL, La Liga, Bundesliga, Serie A, Ligue 1)
+   - Click on any league card (e.g., English Premier League)
+
+2. **Create or Join League Options**:
+   - After selecting a league, see two options: "Create League" and "Join League"
+   - Click "Create League" to start the league creation flow
+   - (Note: "Join League" is a placeholder for future milestone)
+
+3. **Step 2 - Choose League Type**:
+   - View the progress indicator showing Step 2 is active
+   - See the "H2H - Points" league type option
+   - Read the description of Head-to-Head Points scoring
+   - Click "Go" button to proceed
+
+4. **Step 3 - Enter Basic Settings**:
+   - Fill in required fields:
+     - **League Name**: Enter a name for your league (e.g., "Premier Champions 2025")
+     - **Team Name**: Enter your team name (e.g., "FC Winners")
+   - View pre-selected dropdown options:
+     - **League Format**: "Redraft" (only option for now)
+     - **Draft Type**: "Live Online Standard" (only option for now)
+   - Click "Create League" button to save
+
+5. **Verification**:
+   - Confirm success alert appears with league name
+   - League is saved to localStorage
+   - Form resets and returns to league selection
+   - Can create multiple leagues across different competitions
+
+6. **Navigation**:
+   - Test "Back" buttons at each step to return to previous screen
+   - Verify all navigation flows work smoothly
+
+**Note**: Authentication will be implemented in a future milestone. Sidebar navigation items are placeholders.
 
 ---
 
@@ -172,9 +201,14 @@ The app features a **Fantrax-inspired dark theme** with:
 
 ### Main Dashboard
 - **Welcome Section**: Welcome banner with contact information
-- **League Picker**: Grid of 5 football (soccer) competitions to choose from
-- **Selection Feedback**: Shows confirmation when a league is selected
-- **Responsive Layout**: Adapts to different screen sizes
+- **League Picker**: Grid of 5 football (soccer) competitions
+- **Create/Join Options**: After selecting a competition, choose to create or join a league
+- **League Creation Wizard**: 
+  - Step-by-step progress indicator
+  - Step 2: Choose league type (H2H - Points with description)
+  - Step 3: Enter league details form with validation
+- **Created Leagues**: Leagues saved to localStorage and persist across sessions
+- **Navigation**: Back buttons for easy navigation between steps
 
 ## Data Integration
 

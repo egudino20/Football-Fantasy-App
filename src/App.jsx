@@ -1,11 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { saveLeagues, getLeagues } from './utils/localStorage';
 
 function App() {
   const [selectedLeague, setSelectedLeague] = useState(null);
+  const [showCreateLeague, setShowCreateLeague] = useState(false);
+  const [currentStep, setCurrentStep] = useState(2); // Start at step 2 (league type)
+  const [leagueData, setLeagueData] = useState({
+    leagueType: '',
+    leagueName: '',
+    teamName: '',
+    leagueFormat: 'Redraft',
+    draftType: 'Live Online Standard',
+  });
+  const [createdLeagues, setCreatedLeagues] = useState([]);
   // TODO: Add authentication state in future milestone (isAuthenticated, user data)
   // Users will need to be authenticated to create/join leagues
 
-  const leagues = [
+  const competitions = [
     { id: 'epl', name: 'English Premier League', icon: '⚽', shortName: 'EPL' },
     { id: 'laliga', name: 'Spanish La Liga', icon: '⚽', shortName: 'La Liga' },
     { id: 'bundesliga', name: 'Bundesliga', icon: '⚽', shortName: 'Bundesliga' },
@@ -13,10 +24,83 @@ function App() {
     { id: 'ligue1', name: 'French Ligue 1', icon: '⚽', shortName: 'Ligue 1' },
   ];
 
+  // Load leagues from localStorage on mount
+  useEffect(() => {
+    const savedLeagues = getLeagues();
+    setCreatedLeagues(savedLeagues);
+  }, []);
+
   const handleLeagueSelect = (league) => {
     setSelectedLeague(league);
-    // Future: Navigate to league dashboard
-    console.log('Selected league:', league.name);
+  };
+
+  const handleCreateLeague = () => {
+    setShowCreateLeague(true);
+    setCurrentStep(2);
+  };
+
+  const handleJoinLeague = () => {
+    alert('Join League feature coming soon!');
+  };
+
+  const handleBack = () => {
+    if (currentStep === 2) {
+      setShowCreateLeague(false);
+      setSelectedLeague(null);
+      setLeagueData({
+        leagueType: '',
+        leagueName: '',
+        teamName: '',
+        leagueFormat: 'Redraft',
+        draftType: 'Live Online Standard',
+      });
+    } else if (currentStep === 3) {
+      setCurrentStep(2);
+    }
+  };
+
+  const handleSelectLeagueType = (type) => {
+    setLeagueData({ ...leagueData, leagueType: type });
+    setCurrentStep(3);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setLeagueData({ ...leagueData, [name]: value });
+  };
+
+  const handleCreateLeagueSubmit = (e) => {
+    e.preventDefault();
+    
+    if (!leagueData.leagueName || !leagueData.teamName) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    const newLeague = {
+      id: Date.now().toString(),
+      competition: selectedLeague.id,
+      competitionName: selectedLeague.name,
+      ...leagueData,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedLeagues = [...createdLeagues, newLeague];
+    setCreatedLeagues(updatedLeagues);
+    saveLeagues(updatedLeagues);
+
+    // Reset form and show success
+    setShowCreateLeague(false);
+    setCurrentStep(2);
+    setSelectedLeague(null);
+    setLeagueData({
+      leagueType: '',
+      leagueName: '',
+      teamName: '',
+      leagueFormat: 'Redraft',
+      draftType: 'Live Online Standard',
+    });
+    alert(`League "${newLeague.leagueName}" created successfully!`);
   };
 
   return (
@@ -139,59 +223,268 @@ function App() {
       <main className="flex-1 flex flex-col">
         {/* Top Header */}
         <header className="bg-slate-950 border-b border-slate-800 px-8 py-4">
-          <h1 className="text-2xl font-bold">Welcome to FutHub Fantasy Football</h1>
+          <h1 className="text-2xl font-bold">
+            {showCreateLeague && selectedLeague 
+              ? `Create League - ${selectedLeague.name.split(' ')[selectedLeague.name.split(' ').length - 1].toUpperCase()}`
+              : 'Welcome to FutHub Fantasy Football'}
+          </h1>
         </header>
 
         {/* Content Area */}
         <div className="flex-1 p-8">
-          {/* Info Banner */}
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-8 flex items-start gap-4">
-            <div className="text-2xl">ℹ️</div>
-            <div className="flex-1">
-              <h3 className="font-semibold mb-2">Contact us anytime</h3>
-              <p className="text-sm text-slate-300">
-                We listen, and we respond ... quickly! The best place to reach us is by clicking/tapping 
-                the FutHub X at the top left and then the Support button.
-              </p>
-            </div>
-            <button className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-sm transition flex items-center gap-2">
-              <span>💬</span>
-              <span>Contact us</span>
-            </button>
-          </div>
-
-          {/* League Selection */}
-          <div>
-            <h2 className="text-2xl font-bold mb-6">Pick your fantasy football (soccer) league</h2>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-5xl">
-              {leagues.map((league) => (
-                <button
-                  key={league.id}
-                  onClick={() => handleLeagueSelect(league)}
-                  className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg p-6 transition flex flex-col items-center gap-3 group"
-                >
-                  <span className="text-4xl group-hover:scale-110 transition-transform">
-                    {league.icon}
-                  </span>
-                  <span className="font-semibold text-center">{league.shortName}</span>
+          {!selectedLeague && !showCreateLeague && (
+            <>
+              {/* Info Banner */}
+              <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-8 flex items-start gap-4">
+                <div className="text-2xl">ℹ️</div>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-2">Contact us anytime</h3>
+                  <p className="text-sm text-slate-300">
+                    We listen, and we respond ... quickly! The best place to reach us is by clicking/tapping 
+                    the FutHub X at the top left and then the Support button.
+                  </p>
+                </div>
+                <button className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-sm transition flex items-center gap-2">
+                  <span>💬</span>
+                  <span>Contact us</span>
                 </button>
-              ))}
-            </div>
-
-            {selectedLeague && (
-              <div className="mt-8 p-4 bg-green-900 border border-green-700 rounded-lg">
-                <p className="text-green-100">
-                  ✓ Selected: <strong>{selectedLeague.name}</strong> - League dashboard coming in next milestone!
-                </p>
               </div>
-            )}
-          </div>
+
+              {/* League Selection */}
+              <div>
+                <h2 className="text-2xl font-bold mb-6">Pick your fantasy football (soccer) league</h2>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-5xl">
+                  {competitions.map((league) => (
+                    <button
+                      key={league.id}
+                      onClick={() => handleLeagueSelect(league)}
+                      className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg p-6 transition flex flex-col items-center gap-3 group"
+                    >
+                      <span className="text-4xl group-hover:scale-110 transition-transform">
+                        {league.icon}
+                      </span>
+                      <span className="font-semibold text-center">{league.shortName}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Create or Join League Options */}
+          {selectedLeague && !showCreateLeague && (
+            <div className="max-w-4xl mx-auto">
+              <button 
+                onClick={handleBack}
+                className="mb-6 text-blue-400 hover:text-blue-300 flex items-center gap-2"
+              >
+                ← Back to league selection
+              </button>
+
+              <h2 className="text-2xl font-bold mb-2">
+                {selectedLeague.name}
+              </h2>
+              <p className="text-slate-400 mb-8">Choose an option to get started</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Create League Card */}
+                <button
+                  onClick={handleCreateLeague}
+                  className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg p-8 transition text-left group"
+                >
+                  <div className="text-5xl mb-4">🏆</div>
+                  <h3 className="text-xl font-bold mb-2 group-hover:text-blue-400 transition">
+                    Create League
+                  </h3>
+                  <p className="text-slate-400 text-sm">
+                    Start a new fantasy league and invite your friends to compete
+                  </p>
+                </button>
+
+                {/* Join League Card */}
+                <button
+                  onClick={handleJoinLeague}
+                  className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg p-8 transition text-left group"
+                >
+                  <div className="text-5xl mb-4">👥</div>
+                  <h3 className="text-xl font-bold mb-2 group-hover:text-blue-400 transition">
+                    Join League
+                  </h3>
+                  <p className="text-slate-400 text-sm">
+                    Enter a league code to join an existing fantasy league
+                  </p>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Create League Flow */}
+          {showCreateLeague && (
+            <div className="max-w-5xl mx-auto">
+              <button 
+                onClick={handleBack}
+                className="mb-6 text-blue-400 hover:text-blue-300 flex items-center gap-2"
+              >
+                ← Back
+              </button>
+
+              {/* Progress Steps */}
+              <div className="flex items-center gap-4 mb-8">
+                <div className="flex items-center gap-3 px-4 py-2 bg-slate-800 rounded-lg opacity-50">
+                  <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm">1</div>
+                  <div className="text-sm">
+                    <div className="font-semibold">Step 1</div>
+                    <div className="text-slate-400 text-xs">What do you want to do?</div>
+                  </div>
+                </div>
+
+                <div className={`flex items-center gap-3 px-4 py-2 rounded-lg ${currentStep === 2 ? 'bg-green-900 border border-green-700' : 'bg-slate-800'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${currentStep === 2 ? 'bg-green-700' : 'bg-slate-700'}`}>2</div>
+                  <div className="text-sm">
+                    <div className="font-semibold">Step 2</div>
+                    <div className="text-slate-400 text-xs">Choose league type</div>
+                  </div>
+                </div>
+
+                <div className={`flex items-center gap-3 px-4 py-2 rounded-lg ${currentStep === 3 ? 'bg-green-900 border border-green-700' : 'bg-slate-800'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${currentStep === 3 ? 'bg-green-700' : 'bg-slate-700'}`}>3</div>
+                  <div className="text-sm">
+                    <div className="font-semibold">Step 3</div>
+                    <div className="text-slate-400 text-xs">Enter basic settings</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 2: Choose League Type */}
+              {currentStep === 2 && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-6">Choose your league type</h2>
+                  
+                  <div className="grid grid-cols-1 gap-6 max-w-2xl">
+                    {/* H2H - Points */}
+                    <button
+                      onClick={() => handleSelectLeagueType('H2H - Points')}
+                      className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg p-6 transition text-left group"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="text-4xl">👥</div>
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold mb-2 group-hover:text-blue-400 transition">
+                            H2H - Points
+                          </h3>
+                          <p className="text-slate-400 text-sm mb-4">
+                            Fantasy teams compete against each other 1-on-1 and receive a Win, Loss or Tie in each 
+                            Scoring Period, depending on who has the most Fantasy points.
+                          </p>
+                          <button className="bg-green-700 hover:bg-green-600 px-4 py-2 rounded text-sm font-medium transition">
+                            Go
+                          </button>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Enter Basic Settings */}
+              {currentStep === 3 && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-6">Enter basic settings</h2>
+                  
+                  <form onSubmit={handleCreateLeagueSubmit} className="max-w-2xl space-y-6">
+                    {/* League Name */}
+                    <div>
+                      <label htmlFor="leagueName" className="block text-sm font-medium mb-2">
+                        League Name <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="leagueName"
+                        name="leagueName"
+                        value={leagueData.leagueName}
+                        onChange={handleInputChange}
+                        className="w-full bg-slate-800 border border-slate-700 rounded px-4 py-2 focus:outline-none focus:border-blue-500"
+                        placeholder="Enter league name"
+                        required
+                      />
+                    </div>
+
+                    {/* Team Name */}
+                    <div>
+                      <label htmlFor="teamName" className="block text-sm font-medium mb-2">
+                        Team Name <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="teamName"
+                        name="teamName"
+                        value={leagueData.teamName}
+                        onChange={handleInputChange}
+                        className="w-full bg-slate-800 border border-slate-700 rounded px-4 py-2 focus:outline-none focus:border-blue-500"
+                        placeholder="Enter your team name"
+                        required
+                      />
+                    </div>
+
+                    {/* League Format */}
+                    <div>
+                      <label htmlFor="leagueFormat" className="block text-sm font-medium mb-2">
+                        League Format
+                      </label>
+                      <select
+                        id="leagueFormat"
+                        name="leagueFormat"
+                        value={leagueData.leagueFormat}
+                        onChange={handleInputChange}
+                        className="w-full bg-slate-800 border border-slate-700 rounded px-4 py-2 focus:outline-none focus:border-blue-500"
+                      >
+                        <option value="Redraft">Redraft</option>
+                      </select>
+                    </div>
+
+                    {/* Draft Type */}
+                    <div>
+                      <label htmlFor="draftType" className="block text-sm font-medium mb-2">
+                        Draft Type
+                      </label>
+                      <select
+                        id="draftType"
+                        name="draftType"
+                        value={leagueData.draftType}
+                        onChange={handleInputChange}
+                        className="w-full bg-slate-800 border border-slate-700 rounded px-4 py-2 focus:outline-none focus:border-blue-500"
+                      >
+                        <option value="Live Online Standard">Live Online Standard</option>
+                      </select>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="flex gap-4 pt-4">
+                      <button
+                        type="submit"
+                        className="flex-1 bg-green-700 hover:bg-green-600 text-white py-3 px-6 rounded font-medium transition"
+                      >
+                        Create League
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleBack}
+                        className="px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded font-medium transition"
+                      >
+                        Back
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
         <footer className="bg-slate-950 border-t border-slate-800 px-8 py-4 text-center text-slate-400 text-sm">
-          <p>FutHub Fantasy Football - Milestone 1: League Selection ✅</p>
+          <p>FutHub Fantasy Football - Milestone 1: League Creation ✅</p>
         </footer>
       </main>
     </div>
