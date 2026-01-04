@@ -1,17 +1,20 @@
-# Fantasy Football League Manager
+# FutHub Fantasy Football
 
 ## Overview
 
-Fantasy Football League Manager is a comprehensive fantasy soccer platform that allows users to create and manage private leagues across Europe's top 5 football competitions (English Premier League, La Liga, Bundesliga, Serie A, and Ligue 1). The app combines Fantrax-style league management and scoring with ESPN-level advanced analytics and predictive insights, sourcing real-time player statistics and performance data from WhoScored.com. Users can draft players, track live scores, receive player recommendations, and compete with friends using cutting-edge statistical modeling and performance predictions.
+FutHub Fantasy Football is a comprehensive fantasy soccer platform that allows users to create and manage private fantasy leagues across Europe's top 5 football competitions (English Premier League, La Liga, Bundesliga, Serie A, and Ligue 1). The app features a Fantrax-inspired dark-themed interface with advanced analytics and predictive insights, sourcing real-time player statistics and performance data from WhoScored.com. Users can draft players, track live scores, receive player recommendations, and compete with friends using user friendly real time information based on statistical modeling and performance predictions.
 
 ## Features
 
-- **Multi-League Support**: Create leagues for EPL, La Liga, Bundesliga, Serie A, and Ligue 1 with extensible architecture for future leagues
-- **Private Group Leagues**: Invite friends and manage custom scoring rules and roster formats
-- **Real-Time Data**: Live player stats, match scores, and injury updates from WhoScored.com
-- **Advanced Analytics**: Predictive player performance models, matchup analysis, and trend forecasting
-- **Smart Draft Assistant**: AI-powered draft recommendations based on value projections
-- **Custom Scoring**: Flexible scoring categories and roster configurations
+- **Dark-Themed Interface**: Professional Fantrax-inspired UI with intuitive sidebar navigation
+- **Multi-League Support**: Select from EPL, La Liga, Bundesliga, Serie A, and Ligue 1 with extensible architecture for future leagues
+- **League Selection Dashboard**: Pick your fantasy football (soccer) league from the 5 major European competitions
+- **Authentication Ready**: Log In and Sign Up buttons prepared for future authentication implementation
+- **Private Group Leagues**: (Coming soon) Invite friends and manage custom scoring rules and roster formats
+- **Real-Time Data**: (Coming soon) Live player stats, match scores, and injury updates from WhoScored.com
+- **Advanced Analytics**: (Coming soon) Predictive player performance models, matchup analysis, and trend forecasting
+- **Smart Draft Assistant**: (Coming soon) Draft and free agent list player recommendations based on value projections
+- **Custom Scoring**: (Coming soon) Flexible scoring categories and roster configurations
 - **Mobile-Responsive**: Fully optimized for desktop, tablet, and mobile devices
 
 ## Tech Stack
@@ -25,19 +28,29 @@ Fantasy Football League Manager is a comprehensive fantasy soccer platform that 
 
 ## Development Milestones
 
-### Milestone 1: League Creation & Setup ✅
-**Testable Feature**: Users can create a new fantasy league by selecting a competition (EPL, La Liga, etc.), setting league name, number of teams, and basic scoring rules. The league configuration is saved to local storage and persists across browser sessions.
+### Milestone 1: League Selection Interface ✅
+**Testable Feature**: Users can view a Fantrax-inspired dark-themed interface with a sidebar navigation panel and select from 5 major European football competitions (English Premier League, Spanish La Liga, Bundesliga, Italian Serie A, French Ligue 1). The interface includes Log In and Sign Up buttons (placeholders) that are ready for future authentication implementation.
 
 **How to Test**:
-- Click "Create League" button
-- Fill in league details form (name, competition, team count)
-- Save and verify the league appears on dashboard
-- Refresh browser and confirm league data persists
+- Open the app to see the FutHub Fantasy Football dark interface
+- Verify the left sidebar displays with:
+  - Guest User profile section
+  - **Log In** button (blue) - placeholder for future authentication
+  - **Sign Up** button (gray) - placeholder for future authentication
+  - Profile section (Profile, Account, Security, Devices - all placeholders)
+  - Games section (Season-Long, Cash Games, Mock Draft, Public Leagues - all placeholders)
+  - Other section (Forums, Support, FAQ, Treasurer, Player Search, FutHub Home, Terms - all placeholders)
+- View the "Pick your fantasy football (soccer) league" heading in the main content area
+- See 5 league selection cards (EPL, La Liga, Bundesliga, Serie A, Ligue 1)
+- Click on any league card to select it
+- Verify a confirmation message appears showing your selection
+- Hover over league cards to see the interactive hover effects
+- Note: Authentication and league creation will be implemented in future milestones
 
 ---
 
 ### Milestone 2: Player Database & Search ✅
-**Testable Feature**: Browse and search a complete database of players from all 5 leagues with real-time stats (goals, assists, minutes played, form). Search by player name, position, or team with instant filtering and sorting options.
+**Testable Feature**: Browse and search a complete database of players from all 5 leagues with real-time stats (goals, assists, minutes played, etc.). Search by player name, position, or team with instant filtering and sorting options.
 
 **How to Test**:
 - Navigate to "Players" tab
@@ -123,15 +136,45 @@ npm run preview
 football-fantasy-app/
 ├── src/
 │   ├── components/        # React components
-│   ├── contexts/          # Context providers for state management
-│   ├── hooks/             # Custom React hooks
-│   ├── services/          # API services and data fetching
-│   ├── utils/             # Utility functions and helpers
+│   │   └── CreateLeagueForm.jsx
 │   ├── data/              # Static data and configuration
-│   └── App.jsx            # Main app component
+│   │   └── competitions.js
+│   ├── utils/             # Utility functions and helpers
+│   │   └── localStorage.js
+│   ├── App.jsx            # Main app component with Fantrax-style UI
+│   ├── main.jsx           # React entry point
+│   └── index.css          # Global styles with Tailwind
 ├── public/                # Static assets
-└── package.json
+├── index.html
+├── package.json
+├── vite.config.js
+└── tailwind.config.js
 ```
+
+## User Interface
+
+The app features a **Fantrax-inspired dark theme** with:
+
+### Sidebar Navigation (Left Panel)
+- **User Profile**: Guest user profile with avatar
+- **Authentication Buttons**: 
+  - **Log In** button (blue) - Placeholder for future authentication
+  - **Sign Up** button (gray) - Placeholder for future authentication
+  - Note: Users will need to log in or sign up to create/join leagues (to be implemented in future milestone)
+- **Alerts**: Notification system (placeholder)
+- **Profile Section**: Quick access to Profile, Account, Security, and Devices (placeholders)
+- **Games Section**: 
+  - Season-Long (active)
+  - Cash Games (placeholder)
+  - Mock Draft (placeholder)
+  - Public Leagues (placeholder)
+- **Other Section**: Forums, Support, FAQ, Treasurer, Player Search, FutHub Home, Terms (all placeholders)
+
+### Main Dashboard
+- **Welcome Section**: Welcome banner with contact information
+- **League Picker**: Grid of 5 football (soccer) competitions to choose from
+- **Selection Feedback**: Shows confirmation when a league is selected
+- **Responsive Layout**: Adapts to different screen sizes
 
 ## Data Integration
 
@@ -144,6 +187,9 @@ The app integrates with WhoScored.com to fetch:
 
 ## Future Enhancements
 
+- **Authentication System**: Implement Log In and Sign Up functionality (Milestone 2)
+- **League Creation**: Create and manage private leagues after authentication
+- **League Dashboard**: View and manage individual league details
 - **Head-to-Head Matchups**: Weekly one-on-one competitions
 - **Trade System**: Player trading between league members
 - **Waiver Wire**: Free agent acquisition system with priority rankings
