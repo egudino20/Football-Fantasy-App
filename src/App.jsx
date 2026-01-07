@@ -6,6 +6,10 @@ function App() {
   const [showCreateLeague, setShowCreateLeague] = useState(false);
   const [currentStep, setCurrentStep] = useState(2); // Start at step 2 (league type)
   const [currentLeague, setCurrentLeague] = useState(null); // Currently viewing league
+  const [showLeagueSetup, setShowLeagueSetup] = useState(false);
+  const [activeTab, setActiveTab] = useState('general');
+  const [completedTabs, setCompletedTabs] = useState(new Set());
+  const [leagueSettings, setLeagueSettings] = useState({});
   const [leagueData, setLeagueData] = useState({
     leagueType: '',
     leagueName: '',
@@ -16,6 +20,17 @@ function App() {
   const [createdLeagues, setCreatedLeagues] = useState([]);
   // TODO: Add authentication state in future milestone (isAuthenticated, user data)
   // Users will need to be authenticated to create/join leagues
+
+  const setupTabs = [
+    { id: 'general', name: 'General' },
+    { id: 'teams', name: 'Teams and Schedules' },
+    { id: 'pool', name: 'Player Pool' },
+    { id: 'rosters', name: 'Rosters' },
+    { id: 'scoring', name: 'Scoring' },
+    { id: 'transactions', name: 'Transactions and Periods' },
+    { id: 'draft', name: 'Draft' },
+    { id: 'misc', name: 'Misc' },
+  ];
 
   const competitions = [
     { id: 'epl', name: 'English Premier League', icon: '⚽', shortName: 'EPL' },
@@ -45,7 +60,10 @@ function App() {
   };
 
   const handleBack = () => {
-    if (currentStep === 2) {
+    if (showLeagueSetup) {
+      setShowLeagueSetup(false);
+      setActiveTab('general');
+    } else if (currentStep === 2) {
       setShowCreateLeague(false);
       setSelectedLeague(null);
       setLeagueData({
@@ -122,17 +140,62 @@ function App() {
   };
 
   const handleLeagueSetup = () => {
-    alert('League Setup coming in Milestone 2!');
+    setShowLeagueSetup(true);
+    setActiveTab('general');
   };
 
   const handleLeagueHome = () => {
     alert('League Home coming soon!');
   };
 
+  const handleSaveSettings = () => {
+    // Mark current tab as completed
+    setCompletedTabs(prev => new Set([...prev, activeTab]));
+    
+    // Save settings to league (will be backend API call in future)
+    const updatedSettings = {
+      ...leagueSettings,
+      [activeTab]: { configured: true, lastSaved: new Date().toISOString() }
+    };
+    setLeagueSettings(updatedSettings);
+    
+    // Update the league in localStorage
+    if (currentLeague) {
+      const updatedLeagues = createdLeagues.map(league => 
+        league.id === currentLeague.id 
+          ? { ...league, settings: updatedSettings }
+          : league
+      );
+      setCreatedLeagues(updatedLeagues);
+      saveLeagues(updatedLeagues);
+    }
+    
+    alert(`${setupTabs.find(t => t.id === activeTab)?.name} settings saved!`);
+  };
+
+  const handleSaveAndContinue = () => {
+    // Save current tab
+    handleSaveSettings();
+    
+    // Move to next tab
+    const currentIndex = setupTabs.findIndex(tab => tab.id === activeTab);
+    if (currentIndex < setupTabs.length - 1) {
+      setActiveTab(setupTabs[currentIndex + 1].id);
+    }
+  };
+
+  const handleSubmitSettings = () => {
+    // TODO: In future, this will submit all settings to backend
+    alert('All league settings submitted successfully! League is now fully configured.');
+    setShowLeagueSetup(false);
+  };
+
+  const allTabsCompleted = setupTabs.every(tab => completedTabs.has(tab.id));
+
   return (
     <div className="flex min-h-screen bg-slate-900 text-white">
       {/* Left Sidebar - Show different sidebar when viewing a league */}
-      {currentLeague ? (
+      {currentLeague || showLeagueSetup ? (
         // League Sidebar
         <aside className="w-64 bg-slate-950 border-r border-slate-800 flex flex-col">
           {/* League Info */}
@@ -359,7 +422,9 @@ function App() {
         {/* Top Header */}
         <header className="bg-slate-950 border-b border-slate-800 px-8 py-4">
           <h1 className="text-2xl font-bold">
-            {currentLeague
+            {showLeagueSetup
+              ? 'League Setup'
+              : currentLeague
               ? 'Invite Friends'
               : showCreateLeague && selectedLeague 
               ? `Create League - ${selectedLeague.name.split(' ')[selectedLeague.name.split(' ').length - 1].toUpperCase()}`
@@ -369,8 +434,125 @@ function App() {
 
         {/* Content Area */}
         <div className="flex-1 p-8">
+          {/* League Setup Screen */}
+          {showLeagueSetup && currentLeague && (
+            <div className="max-w-7xl mx-auto">
+              <button 
+                onClick={handleBack}
+                className="mb-6 text-blue-400 hover:text-blue-300 flex items-center gap-2"
+              >
+                ← Back to Invite Friends
+              </button>
+
+              {/* Tab Navigation */}
+              <div className="bg-slate-800 border border-slate-700 rounded-lg mb-6 overflow-x-auto">
+                <div className="flex">
+                  {setupTabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`px-6 py-4 text-sm font-medium whitespace-nowrap transition ${
+                        activeTab === tab.id
+                          ? 'bg-slate-700 text-white border-b-2 border-blue-500'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-750'
+                      }`}
+                    >
+                      {tab.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tab Content */}
+              <div className="bg-slate-800 border border-slate-700 rounded-lg p-8 min-h-96">
+                {activeTab === 'general' && (
+                  <div>
+                    <h2 className="text-xl font-bold mb-4">General Settings</h2>
+                    <p className="text-slate-400">Content coming soon...</p>
+                  </div>
+                )}
+                
+                {activeTab === 'teams' && (
+                  <div>
+                    <h2 className="text-xl font-bold mb-4">Teams and Schedules</h2>
+                    <p className="text-slate-400">Content coming soon...</p>
+                  </div>
+                )}
+                
+                {activeTab === 'pool' && (
+                  <div>
+                    <h2 className="text-xl font-bold mb-4">Player Pool</h2>
+                    <p className="text-slate-400">Content coming soon...</p>
+                  </div>
+                )}
+                
+                {activeTab === 'rosters' && (
+                  <div>
+                    <h2 className="text-xl font-bold mb-4">Rosters</h2>
+                    <p className="text-slate-400">Content coming soon...</p>
+                  </div>
+                )}
+                
+                {activeTab === 'scoring' && (
+                  <div>
+                    <h2 className="text-xl font-bold mb-4">Scoring</h2>
+                    <p className="text-slate-400">Content coming soon...</p>
+                  </div>
+                )}
+                
+                {activeTab === 'transactions' && (
+                  <div>
+                    <h2 className="text-xl font-bold mb-4">Transactions and Periods</h2>
+                    <p className="text-slate-400">Content coming soon...</p>
+                  </div>
+                )}
+                
+                {activeTab === 'draft' && (
+                  <div>
+                    <h2 className="text-xl font-bold mb-4">Draft</h2>
+                    <p className="text-slate-400">Content coming soon...</p>
+                  </div>
+                )}
+                
+                {activeTab === 'misc' && (
+                  <div>
+                    <h2 className="text-xl font-bold mb-4">Miscellaneous</h2>
+                    <p className="text-slate-400">Content coming soon...</p>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-700">
+                  <button
+                    onClick={handleSaveSettings}
+                    className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-2 rounded font-medium transition"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleSaveAndContinue}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium transition"
+                  >
+                    Save and Continue
+                  </button>
+                  <button
+                    onClick={handleSubmitSettings}
+                    disabled={!allTabsCompleted}
+                    className={`px-6 py-2 rounded font-medium transition ${
+                      allTabsCompleted
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                    }`}
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Invite Friends Screen */}
-          {currentLeague && (
+          {currentLeague && !showLeagueSetup && (
             <div className="max-w-5xl mx-auto">
               <h2 className="text-3xl font-bold mb-2">Invite Friends</h2>
               <p className="text-slate-400 mb-8">
@@ -435,7 +617,7 @@ function App() {
             </div>
           )}
 
-          {!selectedLeague && !showCreateLeague && !currentLeague && (
+          {!selectedLeague && !showCreateLeague && !currentLeague && !showLeagueSetup && (
             <>
               {/* Info Banner */}
               <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-8 flex items-start gap-4">
@@ -476,7 +658,7 @@ function App() {
           )}
 
           {/* Create or Join League Options */}
-          {selectedLeague && !showCreateLeague && !currentLeague && (
+          {selectedLeague && !showCreateLeague && !currentLeague && !showLeagueSetup && (
             <div className="max-w-4xl mx-auto">
               <button 
                 onClick={handleBack}
@@ -523,7 +705,7 @@ function App() {
           )}
 
           {/* Create League Flow */}
-          {showCreateLeague && !currentLeague && (
+          {showCreateLeague && !currentLeague && !showLeagueSetup && (
             <div className="max-w-5xl mx-auto">
               <button 
                 onClick={handleBack}

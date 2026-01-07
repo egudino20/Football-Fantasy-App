@@ -14,8 +14,10 @@ FutHub Fantasy Football is a comprehensive fantasy soccer platform that allows u
 - **League Sidebar**: Navigation for league features (placeholders)
 - **Authentication Ready**: Log In/Sign Up buttons (coming soon)
 
+**In Progress:**
+- League Setup & Configuration (Milestone 2) - Tab navigation complete, adding content next
+
 **Coming Soon:**
-- League Setup & Configuration (Milestone 2)
 - Player Database & Search (Milestone 3)
 - Draft System (Milestone 4)
 - Live Scoring & Tracking (Milestone 5)
@@ -61,11 +63,45 @@ FutHub Fantasy Football is a comprehensive fantasy soccer platform that allows u
 
 ---
 
-### Milestone 2: League Setup (Coming Soon)
-- Configure scoring rules
-- Set roster positions
-- Draft settings
-- Schedule configuration
+### Milestone 2: League Setup (In Progress)
+
+**Commissioner Mode Only:**
+League creators (commissioners) can configure their league settings. Users who joined a league will see the "League Setup" button greyed out.
+
+**What's Included:**
+- Tab navigation system with 8 setup sections:
+  - General - Basic league settings
+  - Teams and Schedules - League size and matchweek schedules
+  - Player Pool - Available players for the league
+  - Rosters - Team roster configuration
+  - Scoring - Points system for player actions
+  - Transactions and Periods - Waiver wire and trade settings
+  - Draft - Draft date, time, and format
+  - Misc - Additional league options
+- Three action buttons (bottom right):
+  - **Save** - Saves current tab settings
+  - **Save and Continue** - Saves and moves to next tab
+  - **Submit** - Greyed out until all tabs are completed, finalizes all settings
+- Tab completion tracking (marks tabs as configured when saved)
+- Settings stored in localStorage (will be backend API in future)
+- League sidebar navigation remains visible
+- Back button to return to Invite Friends screen
+- Each tab currently shows placeholder content
+
+**How to Test:**
+1. Create a league (complete Milestone 1)
+2. From Invite Friends screen, click "League Setup"
+3. View the 8 tabs at the top
+4. Click each tab to see it switch (content is placeholder)
+5. Test action buttons:
+   - Click "Save" - marks tab as completed
+   - Click "Save and Continue" - saves and moves to next tab
+   - Notice "Submit" is greyed out
+   - Save all 8 tabs to enable "Submit" button
+   - Click "Submit" to finalize settings
+6. Click "Back to Invite Friends" to return
+
+**Note:** Only commissioners can access League Setup. League members will have view-only access to league settings.
 
 ---
 
@@ -133,13 +169,11 @@ npm run preview
 ```
 football-fantasy-app/
 ├── src/
-│   ├── components/        # React components
-│   │   └── CreateLeagueForm.jsx
 │   ├── data/              # Static data and configuration
 │   │   └── competitions.js
 │   ├── utils/             # Utility functions and helpers
 │   │   └── localStorage.js
-│   ├── App.jsx            # Main app component with Fantrax-style UI
+│   ├── App.jsx            # Main app component (all screens and logic)
 │   ├── main.jsx           # React entry point
 │   └── index.css          # Global styles with Tailwind
 ├── public/                # Static assets
