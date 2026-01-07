@@ -70,14 +70,14 @@ League creators (commissioners) can configure their league settings. Users who j
 
 **What's Included:**
 - Tab navigation system with 8 setup sections:
-  - General - Basic league settings
-  - Teams and Schedules - League size and matchweek schedules
-  - Player Pool - Available players for the league
-  - Rosters - Team roster configuration
-  - Scoring - Points system for player actions
-  - Transactions and Periods - Waiver wire and trade settings
-  - Draft - Draft date, time, and format
-  - Misc - Additional league options
+  - **General** - League name, join ID/password (auto-generated), join URL, scoring system description ✅
+  - Teams and Schedules - League size and matchweek schedules (placeholder)
+  - Player Pool - Available players for the league (placeholder)
+  - Rosters - Team roster configuration (placeholder)
+  - Scoring - Points system for player actions (placeholder)
+  - Transactions and Periods - Waiver wire and trade settings (placeholder)
+  - Draft - Draft date, time, and format (placeholder)
+  - Misc - Additional league options (placeholder)
 - Three action buttons (bottom right):
   - **Save** - Saves current tab settings
   - **Save and Continue** - Saves and moves to next tab
@@ -86,13 +86,16 @@ League creators (commissioners) can configure their league settings. Users who j
 - Settings stored in localStorage (will be backend API in future)
 - League sidebar navigation remains visible
 - Back button to return to Invite Friends screen
-- Each tab currently shows placeholder content
 
 **How to Test:**
 1. Create a league (complete Milestone 1)
 2. From Invite Friends screen, click "League Setup"
 3. View the 8 tabs at the top
-4. Click each tab to see it switch (content is placeholder)
+4. Test General tab:
+   - Edit league name
+   - View auto-generated Join ID and Password (read-only)
+   - Copy Join URL using the Copy button
+   - View scoring system description
 5. Test action buttons:
    - Click "Save" - marks tab as completed
    - Click "Save and Continue" - saves and moves to next tab

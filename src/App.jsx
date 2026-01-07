@@ -10,6 +10,9 @@ function App() {
   const [activeTab, setActiveTab] = useState('general');
   const [completedTabs, setCompletedTabs] = useState(new Set());
   const [leagueSettings, setLeagueSettings] = useState({});
+  const [generalSettings, setGeneralSettings] = useState({
+    leagueName: '',
+  });
   const [leagueData, setLeagueData] = useState({
     leagueType: '',
     leagueName: '',
@@ -90,6 +93,19 @@ function App() {
     setLeagueData({ ...leagueData, [name]: value });
   };
 
+  const generateJoinCode = () => {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  };
+
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
   const handleCreateLeagueSubmit = (e) => {
     e.preventDefault();
     
@@ -98,10 +114,16 @@ function App() {
       return;
     }
 
+    const joinId = generateJoinCode();
+    const joinPassword = generatePassword();
+
     const newLeague = {
       id: Date.now().toString(),
       competition: selectedLeague.id,
       competitionName: selectedLeague.name,
+      joinId: joinId,
+      joinPassword: joinPassword,
+      joinUrl: `${window.location.origin}/join/${joinId}`,
       ...leagueData,
       createdAt: new Date().toISOString(),
     };
@@ -142,6 +164,12 @@ function App() {
   const handleLeagueSetup = () => {
     setShowLeagueSetup(true);
     setActiveTab('general');
+    // Initialize general settings with current league data
+    if (currentLeague) {
+      setGeneralSettings({
+        leagueName: currentLeague.leagueName,
+      });
+    }
   };
 
   const handleLeagueHome = () => {
@@ -161,13 +189,19 @@ function App() {
     
     // Update the league in localStorage
     if (currentLeague) {
+      let updatedLeague = { ...currentLeague, settings: updatedSettings };
+      
+      // Save general settings to league
+      if (activeTab === 'general') {
+        updatedLeague = { ...updatedLeague, leagueName: generalSettings.leagueName };
+      }
+      
       const updatedLeagues = createdLeagues.map(league => 
-        league.id === currentLeague.id 
-          ? { ...league, settings: updatedSettings }
-          : league
+        league.id === currentLeague.id ? updatedLeague : league
       );
       setCreatedLeagues(updatedLeagues);
       saveLeagues(updatedLeagues);
+      setCurrentLeague(updatedLeague);
     }
     
     alert(`${setupTabs.find(t => t.id === activeTab)?.name} settings saved!`);
@@ -467,8 +501,99 @@ function App() {
               <div className="bg-slate-800 border border-slate-700 rounded-lg p-8 min-h-96">
                 {activeTab === 'general' && (
                   <div>
-                    <h2 className="text-xl font-bold mb-4">General Settings</h2>
-                    <p className="text-slate-400">Content coming soon...</p>
+                    <h2 className="text-xl font-bold mb-6">General Settings</h2>
+                    
+                    <div className="space-y-6 max-w-2xl">
+                      {/* League Name */}
+                      <div>
+                        <label htmlFor="leagueName" className="block text-sm font-medium mb-2">
+                          League Name
+                        </label>
+                        <input
+                          type="text"
+                          id="leagueName"
+                          value={generalSettings.leagueName}
+                          onChange={(e) => setGeneralSettings({ ...generalSettings, leagueName: e.target.value })}
+                          className="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 focus:outline-none focus:border-blue-500"
+                          placeholder="Enter league name"
+                        />
+                      </div>
+
+                      {/* League Join ID */}
+                      <div>
+                        <label htmlFor="joinId" className="block text-sm font-medium mb-2">
+                          League Join ID
+                        </label>
+                        <input
+                          type="text"
+                          id="joinId"
+                          value={currentLeague?.joinId || ''}
+                          readOnly
+                          className="w-full bg-slate-800 border border-slate-600 rounded px-4 py-2 text-slate-400 cursor-not-allowed"
+                        />
+                        <p className="text-xs text-slate-400 mt-1">This ID is automatically generated and cannot be changed.</p>
+                      </div>
+
+                      {/* League Password */}
+                      <div>
+                        <label htmlFor="joinPassword" className="block text-sm font-medium mb-2">
+                          League Password
+                        </label>
+                        <input
+                          type="text"
+                          id="joinPassword"
+                          value={currentLeague?.joinPassword || ''}
+                          readOnly
+                          className="w-full bg-slate-800 border border-slate-600 rounded px-4 py-2 text-slate-400 cursor-not-allowed"
+                        />
+                        <p className="text-xs text-slate-400 mt-1">This password is automatically generated and cannot be changed.</p>
+                      </div>
+
+                      {/* League Join URL */}
+                      <div>
+                        <label htmlFor="joinUrl" className="block text-sm font-medium mb-2">
+                          League Join URL
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            id="joinUrl"
+                            value={currentLeague?.joinUrl || ''}
+                            readOnly
+                            className="flex-1 bg-slate-700 border border-slate-600 rounded px-4 py-2 text-slate-300"
+                          />
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(currentLeague?.joinUrl || '');
+                              alert('Join URL copied to clipboard!');
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-medium transition"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">Anyone with this link can join the league (must be logged in).</p>
+                      </div>
+
+                      {/* Scoring System */}
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Scoring System
+                        </label>
+                        <div className="bg-slate-700 border border-slate-600 rounded p-4">
+                          <div className="font-semibold mb-2">
+                            Scoring Type: Head-to-Head (Points-Based)
+                          </div>
+                          <p className="text-sm text-slate-300">
+                            Each team competes directly against another team each Scoring Period (typically one week). 
+                            Teams accumulate points using the standard Points-Based scoring system. At the end of each 
+                            Scoring Period, the team with the most points records a win, and the opponent records a loss. 
+                            Support multiple matchups per scoring period. At the end of the season, standings are 
+                            determined by win–loss record.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
                 
