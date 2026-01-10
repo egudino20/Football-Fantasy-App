@@ -191,6 +191,7 @@ function App() {
             teamName: currentLeague.teamName,
             teamAbbreviation: currentLeague.teamName.substring(0, 4).toUpperCase(),
             managerEmail: 'commissioner@league.com', // Placeholder until auth is implemented
+            sendInvitation: false,
             invitationSent: true,
             joinedLeague: true,
             isCommissioner: true,
@@ -278,6 +279,7 @@ function App() {
       teamName: '',
       teamAbbreviation: '',
       managerEmail: '',
+      sendInvitation: false,
       invitationSent: false,
       joinedLeague: false,
       isCommissioner: false,
@@ -305,9 +307,9 @@ function App() {
   };
 
   const handleSendInvitations = () => {
-    // Mark all teams with emails as invitation sent
+    // Send invitations only to teams with checked boxes
     const updatedTeams = teamsSettings.teams.map(team => {
-      if (team.managerEmail && !team.invitationSent && !team.isCommissioner) {
+      if (team.managerEmail && team.sendInvitation && !team.invitationSent && !team.isCommissioner) {
         // TODO: Backend API call to send email invitation
         return { ...team, invitationSent: true };
       }
@@ -316,8 +318,28 @@ function App() {
     
     setTeamsSettings({ ...teamsSettings, teams: updatedTeams });
     
+    // Count how many invitations were sent
+    const sentCount = updatedTeams.filter(t => t.invitationSent && !t.isCommissioner).length;
+    alert(`${sentCount} invitation(s) sent successfully!`);
+    
     // Also save the settings
     handleSaveSettings();
+  };
+
+  const handleToggleSendInvitation = (teamId) => {
+    const team = teamsSettings.teams.find(t => t.id === teamId);
+    
+    if (!team?.managerEmail) {
+      alert('Please enter an email address first');
+      return;
+    }
+    
+    // Just toggle the checkbox state, don't send yet
+    const updatedTeams = teamsSettings.teams.map(t =>
+      t.id === teamId ? { ...t, sendInvitation: !t.sendInvitation } : t
+    );
+    
+    setTeamsSettings({ ...teamsSettings, teams: updatedTeams });
   };
 
   const allTabsCompleted = setupTabs.every(tab => completedTabs.has(tab.id));
@@ -856,12 +878,24 @@ function App() {
                                       {team.joinedLeague ? 'Yes' : 'No'}
                                     </td>
                                     <td className="border border-slate-600 px-3 py-2 text-center">
-                                      <input
-                                        type="checkbox"
-                                        checked={team.invitationSent}
-                                        disabled
-                                        className="w-4 h-4 cursor-not-allowed"
-                                      />
+                                      {team.isCommissioner ? (
+                                        <input
+                                          type="checkbox"
+                                          checked={false}
+                                          disabled
+                                          className="w-4 h-4 cursor-not-allowed opacity-50"
+                                        />
+                                      ) : (
+                                        <input
+                                          type="checkbox"
+                                          checked={team.sendInvitation || false}
+                                          disabled={!team.managerEmail || team.invitationSent}
+                                          onChange={() => handleToggleSendInvitation(team.id)}
+                                          className={`w-4 h-4 ${
+                                            !team.managerEmail || team.invitationSent ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                                          }`}
+                                        />
+                                      )}
                                     </td>
                                     <td className="border border-slate-600 px-3 py-2 text-center">
                                       {!team.isCommissioner && (

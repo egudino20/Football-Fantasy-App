@@ -113,8 +113,10 @@ League creators (commissioners) can configure their league settings. Users who j
      - Set maximum number of teams (dropdown 4-20)
      - Click "Add Team" button above table to add new team rows
      - Fill in team name, abbreviation (max 4 chars), and manager email
-     - Click "Send Email Invitations & Save" to send invites
-     - Watch "Invitation Sent" column change to "Yes"
+     - Check "Send Invitation" boxes for teams you want to invite (requires email)
+     - Click "Send Email Invitations & Save" to send all checked invitations
+     - Watch "Invitation Sent" column change to "Yes" for checked teams
+     - Checkbox becomes disabled once invitation is sent
      - Remove teams using ✕ button (except commissioner)
    - Click other sub-tabs to switch views (placeholders)
 6. Test action buttons:
