@@ -71,7 +71,11 @@ League creators (commissioners) can configure their league settings. Users who j
 **What's Included:**
 - Tab navigation system with 8 setup sections:
   - **General** - League name, join ID/password (auto-generated), join URL, scoring system description ✅
-  - Teams and Schedules - League size and matchweek schedules (placeholder)
+  - **Teams and Schedules** - Nested tabs: ✅
+    - **Teams** - Invite managers via email, manage team roster, view invitation status ✅
+    - Schedule - Schedule configuration (placeholder)
+    - Playoffs - Playoffs configuration (placeholder)
+    - Matchups - Matchups configuration (placeholder)
   - Player Pool - Available players for the league (placeholder)
   - Rosters - Team roster configuration (placeholder)
   - Scoring - Points system for player actions (placeholder)
@@ -80,8 +84,9 @@ League creators (commissioners) can configure their league settings. Users who j
   - Misc - Additional league options (placeholder)
 - Three action buttons (bottom right):
   - **Save** - Saves current tab settings
-  - **Save and Continue** - Saves and moves to next tab
+  - **Save and Continue** - Saves and moves to next tab (disabled until required fields filled)
   - **Submit** - Greyed out until all tabs are completed, finalizes all settings
+- Required field validation (fields marked with * must be filled)
 - Tab completion tracking (marks tabs as configured when saved)
 - Settings stored in localStorage (will be backend API in future)
 - League sidebar navigation remains visible
@@ -92,17 +97,33 @@ League creators (commissioners) can configure their league settings. Users who j
 2. From Invite Friends screen, click "League Setup"
 3. View the 8 tabs at the top
 4. Test General tab:
-   - Edit league name
+   - View League Name field marked with * (required)
+   - Notice "Save and Continue" is disabled when field is empty
+   - Edit league name - button becomes enabled
+   - Clear league name - button becomes disabled again
    - View auto-generated Join ID and Password (read-only)
    - Copy Join URL using the Copy button
    - View scoring system description
-5. Test action buttons:
+5. Test Teams and Schedules tab:
+   - Click "Teams and Schedules" tab
+   - See 4 sub-tabs: Teams, Schedule, Playoffs, Matchups
+   - Test Teams sub-tab:
+     - View commissioner's team (highlighted in yellow)
+     - See join link with copy button
+     - Set maximum number of teams (dropdown 4-20)
+     - Click "Add Team" button above table to add new team rows
+     - Fill in team name, abbreviation (max 4 chars), and manager email
+     - Click "Send Email Invitations & Save" to send invites
+     - Watch "Invitation Sent" column change to "Yes"
+     - Remove teams using ✕ button (except commissioner)
+   - Click other sub-tabs to switch views (placeholders)
+6. Test action buttons:
    - Click "Save" - marks tab as completed
    - Click "Save and Continue" - saves and moves to next tab
    - Notice "Submit" is greyed out
    - Save all 8 tabs to enable "Submit" button
    - Click "Submit" to finalize settings
-6. Click "Back to Invite Friends" to return
+7. Click "Back to Invite Friends" to return
 
 **Note:** Only commissioners can access League Setup. League members will have view-only access to league settings.
 

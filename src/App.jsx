@@ -8,10 +8,15 @@ function App() {
   const [currentLeague, setCurrentLeague] = useState(null); // Currently viewing league
   const [showLeagueSetup, setShowLeagueSetup] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [activeSubTab, setActiveSubTab] = useState('teams'); // For Teams and Schedules sub-tabs
   const [completedTabs, setCompletedTabs] = useState(new Set());
   const [leagueSettings, setLeagueSettings] = useState({});
   const [generalSettings, setGeneralSettings] = useState({
     leagueName: '',
+  });
+  const [teamsSettings, setTeamsSettings] = useState({
+    maxTeams: 10,
+    teams: [],
   });
   const [leagueData, setLeagueData] = useState({
     leagueType: '',
@@ -33,6 +38,13 @@ function App() {
     { id: 'transactions', name: 'Transactions and Periods' },
     { id: 'draft', name: 'Draft' },
     { id: 'misc', name: 'Misc' },
+  ];
+
+  const teamsSubTabs = [
+    { id: 'teams', name: 'Teams' },
+    { id: 'schedule', name: 'Schedule' },
+    { id: 'playoffs', name: 'Playoffs' },
+    { id: 'matchups', name: 'Matchups' },
   ];
 
   const competitions = [
@@ -164,10 +176,26 @@ function App() {
   const handleLeagueSetup = () => {
     setShowLeagueSetup(true);
     setActiveTab('general');
+    setActiveSubTab('teams');
     // Initialize general settings with current league data
     if (currentLeague) {
       setGeneralSettings({
         leagueName: currentLeague.leagueName,
+      });
+      // Initialize teams with commissioner
+      setTeamsSettings({
+        maxTeams: currentLeague.settings?.teams?.maxTeams || 10,
+        teams: currentLeague.settings?.teams?.teams || [
+          {
+            id: 'commissioner',
+            teamName: currentLeague.teamName,
+            teamAbbreviation: currentLeague.teamName.substring(0, 4).toUpperCase(),
+            managerEmail: 'commissioner@league.com', // Placeholder until auth is implemented
+            invitationSent: true,
+            joinedLeague: true,
+            isCommissioner: true,
+          }
+        ],
       });
     }
   };
@@ -185,6 +213,12 @@ function App() {
       ...leagueSettings,
       [activeTab]: { configured: true, lastSaved: new Date().toISOString() }
     };
+    
+    // Add tab-specific settings
+    if (activeTab === 'teams') {
+      updatedSettings.teams = teamsSettings;
+    }
+    
     setLeagueSettings(updatedSettings);
     
     // Update the league in localStorage
@@ -208,6 +242,12 @@ function App() {
   };
 
   const handleSaveAndContinue = () => {
+    // Validate required fields before saving
+    if (activeTab === 'general' && !generalSettings.leagueName.trim()) {
+      alert('Please fill in all required fields (marked with *)');
+      return;
+    }
+    
     // Save current tab
     handleSaveSettings();
     
@@ -218,10 +258,66 @@ function App() {
     }
   };
 
+  const isCurrentTabValid = () => {
+    if (activeTab === 'general') {
+      return generalSettings.leagueName.trim() !== '';
+    }
+    // Other tabs don't have required fields yet
+    return true;
+  };
+
   const handleSubmitSettings = () => {
     // TODO: In future, this will submit all settings to backend
     alert('All league settings submitted successfully! League is now fully configured.');
     setShowLeagueSetup(false);
+  };
+
+  const handleAddTeam = () => {
+    const newTeam = {
+      id: Date.now().toString(),
+      teamName: '',
+      teamAbbreviation: '',
+      managerEmail: '',
+      invitationSent: false,
+      joinedLeague: false,
+      isCommissioner: false,
+    };
+    setTeamsSettings({
+      ...teamsSettings,
+      teams: [...teamsSettings.teams, newTeam],
+    });
+  };
+
+  const handleRemoveTeam = (teamId) => {
+    setTeamsSettings({
+      ...teamsSettings,
+      teams: teamsSettings.teams.filter(team => team.id !== teamId),
+    });
+  };
+
+  const handleTeamChange = (teamId, field, value) => {
+    setTeamsSettings({
+      ...teamsSettings,
+      teams: teamsSettings.teams.map(team =>
+        team.id === teamId ? { ...team, [field]: value } : team
+      ),
+    });
+  };
+
+  const handleSendInvitations = () => {
+    // Mark all teams with emails as invitation sent
+    const updatedTeams = teamsSettings.teams.map(team => {
+      if (team.managerEmail && !team.invitationSent && !team.isCommissioner) {
+        // TODO: Backend API call to send email invitation
+        return { ...team, invitationSent: true };
+      }
+      return team;
+    });
+    
+    setTeamsSettings({ ...teamsSettings, teams: updatedTeams });
+    
+    // Also save the settings
+    handleSaveSettings();
   };
 
   const allTabsCompleted = setupTabs.every(tab => completedTabs.has(tab.id));
@@ -499,6 +595,14 @@ function App() {
 
               {/* Tab Content */}
               <div className="bg-slate-800 border border-slate-700 rounded-lg p-8 min-h-96">
+                {/* Required Fields Indicator */}
+                <div className="flex justify-between items-start mb-6">
+                  <div className="flex-1"></div>
+                  <p className="text-xs text-slate-400">
+                    <span className="text-red-400">*</span> Required Fields
+                  </p>
+                </div>
+
                 {activeTab === 'general' && (
                   <div>
                     <h2 className="text-xl font-bold mb-6">General Settings</h2>
@@ -507,7 +611,7 @@ function App() {
                       {/* League Name */}
                       <div>
                         <label htmlFor="leagueName" className="block text-sm font-medium mb-2">
-                          League Name
+                          League Name <span className="text-red-400">*</span>
                         </label>
                         <input
                           type="text"
@@ -516,6 +620,7 @@ function App() {
                           onChange={(e) => setGeneralSettings({ ...generalSettings, leagueName: e.target.value })}
                           className="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 focus:outline-none focus:border-blue-500"
                           placeholder="Enter league name"
+                          required
                         />
                       </div>
 
@@ -599,8 +704,204 @@ function App() {
                 
                 {activeTab === 'teams' && (
                   <div>
-                    <h2 className="text-xl font-bold mb-4">Teams and Schedules</h2>
-                    <p className="text-slate-400">Content coming soon...</p>
+                    <h2 className="text-xl font-bold mb-6">Teams and Schedules</h2>
+                    
+                    {/* Sub-tabs */}
+                    <div className="bg-slate-700 rounded-lg mb-6 p-1 flex gap-1">
+                      {teamsSubTabs.map((subTab) => (
+                        <button
+                          key={subTab.id}
+                          onClick={() => setActiveSubTab(subTab.id)}
+                          className={`flex-1 px-4 py-2 text-sm font-medium rounded transition ${
+                            activeSubTab === subTab.id
+                              ? 'bg-slate-600 text-white'
+                              : 'text-slate-300 hover:text-white hover:bg-slate-650'
+                          }`}
+                        >
+                          {subTab.name}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Sub-tab Content */}
+                    <div className="space-y-6">
+                      {activeSubTab === 'teams' && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Teams Configuration</h3>
+                          
+                          {/* Information Section */}
+                          <div className="bg-slate-700 border border-slate-600 rounded-lg p-4 mb-6 space-y-2 text-sm">
+                            <p className="text-slate-300">
+                              <strong>To invite by email:</strong> Enter their email addresses in the Manager Email column below and click 
+                              "Send Email Invitations & Save" above. You can enter a team name as well. A team will automatically be created, 
+                              whether or not it has a manager.
+                            </p>
+                            <p className="text-slate-300">
+                              <strong>Teams can also join your league (without creating invites) as follows:</strong>
+                            </p>
+                            <div className="flex items-center gap-2 bg-slate-800 p-3 rounded">
+                              <span className="text-slate-400">Copy & paste this link to anyone and they simply click on it to join:</span>
+                              <input
+                                type="text"
+                                value={currentLeague?.joinUrl || ''}
+                                readOnly
+                                className="flex-1 bg-slate-700 border border-slate-600 rounded px-3 py-1 text-sm text-slate-300"
+                              />
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(currentLeague?.joinUrl || '');
+                                  alert('Join link copied!');
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm font-medium transition"
+                              >
+                                Copy
+                              </button>
+                            </div>
+                            <p className="text-slate-300">• Members can only own one team</p>
+                            <p className="text-slate-300">• Fantasy teams remain in league if a manager quits the league</p>
+                            <div className="flex items-center gap-2">
+                              <label className="text-slate-300 font-medium">Maximum number of teams in league:</label>
+                              <select
+                                value={teamsSettings.maxTeams}
+                                onChange={(e) => setTeamsSettings({ ...teamsSettings, maxTeams: parseInt(e.target.value) })}
+                                className="bg-slate-800 border border-slate-600 rounded px-3 py-1 text-sm"
+                              >
+                                {[4, 6, 8, 10, 12, 14, 16, 18, 20].map(num => (
+                                  <option key={num} value={num}>{num}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Send Invitations Button */}
+                          <div className="mb-4 flex gap-3">
+                            <button
+                              onClick={handleAddTeam}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium transition"
+                            >
+                              Add Team
+                            </button>
+                            <button
+                              onClick={handleSendInvitations}
+                              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-medium transition"
+                            >
+                              Send Email Invitations & Save
+                            </button>
+                          </div>
+
+                          {/* Teams Table */}
+                          <div className="overflow-x-auto">
+                            <table className="w-full border border-slate-600">
+                              <thead>
+                                <tr className="bg-slate-700">
+                                  <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-left">Add Owner</th>
+                                  <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-left">Team Name</th>
+                                  <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-left">Team Abbreviation</th>
+                                  <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-left">Manager Email</th>
+                                  <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-center">Invitation Sent</th>
+                                  <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-center">Joined League</th>
+                                  <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-center">Send Invitation</th>
+                                  <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-center">Remove</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {teamsSettings.teams.map((team, index) => (
+                                  <tr key={team.id} className={team.isCommissioner ? 'bg-yellow-900 bg-opacity-20' : index % 2 === 0 ? 'bg-slate-800' : 'bg-slate-750'}>
+                                    <td className="border border-slate-600 px-3 py-2 text-center">
+                                      {team.isCommissioner && (
+                                        <span className="text-sm font-semibold text-yellow-400">Commissioner</span>
+                                      )}
+                                    </td>
+                                    <td className="border border-slate-600 px-3 py-2">
+                                      <input
+                                        type="text"
+                                        value={team.teamName}
+                                        onChange={(e) => handleTeamChange(team.id, 'teamName', e.target.value)}
+                                        disabled={team.isCommissioner}
+                                        className={`w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm ${
+                                          team.isCommissioner ? 'bg-yellow-900 bg-opacity-20 cursor-not-allowed' : ''
+                                        }`}
+                                        placeholder="Team name"
+                                      />
+                                    </td>
+                                    <td className="border border-slate-600 px-3 py-2">
+                                      <input
+                                        type="text"
+                                        value={team.teamAbbreviation}
+                                        onChange={(e) => handleTeamChange(team.id, 'teamAbbreviation', e.target.value)}
+                                        disabled={team.isCommissioner}
+                                        maxLength={4}
+                                        className={`w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm ${
+                                          team.isCommissioner ? 'bg-yellow-900 bg-opacity-20 cursor-not-allowed' : ''
+                                        }`}
+                                        placeholder="ABBR"
+                                      />
+                                    </td>
+                                    <td className="border border-slate-600 px-3 py-2">
+                                      <input
+                                        type="email"
+                                        value={team.managerEmail}
+                                        onChange={(e) => handleTeamChange(team.id, 'managerEmail', e.target.value)}
+                                        disabled={team.isCommissioner}
+                                        className={`w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm ${
+                                          team.isCommissioner ? 'bg-yellow-900 bg-opacity-20 cursor-not-allowed' : ''
+                                        }`}
+                                        placeholder="email@example.com"
+                                      />
+                                    </td>
+                                    <td className="border border-slate-600 px-3 py-2 text-center text-sm">
+                                      {team.invitationSent ? 'Yes' : 'No'}
+                                    </td>
+                                    <td className="border border-slate-600 px-3 py-2 text-center text-sm">
+                                      {team.joinedLeague ? 'Yes' : 'No'}
+                                    </td>
+                                    <td className="border border-slate-600 px-3 py-2 text-center">
+                                      <input
+                                        type="checkbox"
+                                        checked={team.invitationSent}
+                                        disabled
+                                        className="w-4 h-4 cursor-not-allowed"
+                                      />
+                                    </td>
+                                    <td className="border border-slate-600 px-3 py-2 text-center">
+                                      {!team.isCommissioner && (
+                                        <button
+                                          onClick={() => handleRemoveTeam(team.id)}
+                                          className="text-red-500 hover:text-red-400 text-xl font-bold transition"
+                                        >
+                                          ✕
+                                        </button>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {activeSubTab === 'schedule' && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-3">Schedule Configuration</h3>
+                          <p className="text-slate-400">Content coming soon...</p>
+                        </div>
+                      )}
+                      
+                      {activeSubTab === 'playoffs' && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-3">Playoffs Configuration</h3>
+                          <p className="text-slate-400">Content coming soon...</p>
+                        </div>
+                      )}
+                      
+                      {activeSubTab === 'matchups' && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-3">Matchups Configuration</h3>
+                          <p className="text-slate-400">Content coming soon...</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 
@@ -656,7 +957,12 @@ function App() {
                   </button>
                   <button
                     onClick={handleSaveAndContinue}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium transition"
+                    disabled={!isCurrentTabValid()}
+                    className={`px-6 py-2 rounded font-medium transition ${
+                      isCurrentTabValid()
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                    }`}
                   >
                     Save and Continue
                   </button>
