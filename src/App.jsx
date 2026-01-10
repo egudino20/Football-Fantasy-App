@@ -18,6 +18,12 @@ function App() {
     maxTeams: 10,
     teams: [],
   });
+  const [scheduleSettings, setScheduleSettings] = useState({
+    startDate: '',
+    endDate: '',
+    useLeagueAverage: false,
+    matchupsPerPeriod: 1,
+  });
   const [leagueData, setLeagueData] = useState({
     leagueType: '',
     leagueName: '',
@@ -198,6 +204,15 @@ function App() {
           }
         ],
       });
+      // Initialize schedule settings with defaults
+      const currentYear = new Date().getFullYear();
+      const nextYear = currentYear + 1;
+      setScheduleSettings({
+        startDate: currentLeague.settings?.schedule?.startDate || `${currentYear}-08-01`,
+        endDate: currentLeague.settings?.schedule?.endDate || `${nextYear}-05-31`,
+        useLeagueAverage: currentLeague.settings?.schedule?.useLeagueAverage || false,
+        matchupsPerPeriod: currentLeague.settings?.schedule?.matchupsPerPeriod || 1,
+      });
     }
   };
 
@@ -218,6 +233,9 @@ function App() {
     // Add tab-specific settings
     if (activeTab === 'teams') {
       updatedSettings.teams = teamsSettings;
+    }
+    if (activeTab === 'teams' && activeSubTab === 'schedule') {
+      updatedSettings.schedule = scheduleSettings;
     }
     
     setLeagueSettings(updatedSettings);
@@ -917,8 +935,73 @@ function App() {
                       
                       {activeSubTab === 'schedule' && (
                         <div>
-                          <h3 className="text-lg font-semibold mb-3">Schedule Configuration</h3>
-                          <p className="text-slate-400">Content coming soon...</p>
+                          <h3 className="text-lg font-semibold mb-4">Schedule Configuration</h3>
+                          
+                          <div className="space-y-6 max-w-2xl">
+                            {/* Start Date */}
+                            <div>
+                              <label htmlFor="startDate" className="block text-sm font-medium mb-2">
+                                Your league stats begin accumulating points on:
+                              </label>
+                              <input
+                                type="date"
+                                id="startDate"
+                                value={scheduleSettings.startDate}
+                                onChange={(e) => setScheduleSettings({ ...scheduleSettings, startDate: e.target.value })}
+                                className="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 focus:outline-none focus:border-blue-500"
+                              />
+                              <p className="text-xs text-slate-400 mt-1">Defaults to August 1st of the current year</p>
+                            </div>
+
+                            {/* End Date */}
+                            <div>
+                              <label htmlFor="endDate" className="block text-sm font-medium mb-2">
+                                Your league stats end accumulating points on:
+                              </label>
+                              <input
+                                type="date"
+                                id="endDate"
+                                value={scheduleSettings.endDate}
+                                onChange={(e) => setScheduleSettings({ ...scheduleSettings, endDate: e.target.value })}
+                                className="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 focus:outline-none focus:border-blue-500"
+                              />
+                              <p className="text-xs text-slate-400 mt-1">Defaults to May 31st of the next year</p>
+                            </div>
+
+                            {/* League Average Opponent */}
+                            <div>
+                              <label className="flex items-start gap-3">
+                                <input
+                                  type="checkbox"
+                                  checked={scheduleSettings.useLeagueAverage}
+                                  onChange={(e) => setScheduleSettings({ ...scheduleSettings, useLeagueAverage: e.target.checked })}
+                                  className="mt-1 w-4 h-4 cursor-pointer"
+                                />
+                                <div>
+                                  <span className="block text-sm font-medium">Use league average/median points as opponents</span>
+                                  <p className="text-xs text-slate-400 mt-1">
+                                    If checked, the league will have a league average opponent if there is an odd number of teams. 
+                                    If unchecked, owners will alternate having byes each week.
+                                  </p>
+                                </div>
+                              </label>
+                            </div>
+
+                            {/* Matchups Per Period */}
+                            <div>
+                              <label htmlFor="matchupsPerPeriod" className="block text-sm font-medium mb-2">
+                                Number of matchups each team plays each scoring period:
+                              </label>
+                              <select
+                                id="matchupsPerPeriod"
+                                value={scheduleSettings.matchupsPerPeriod}
+                                onChange={(e) => setScheduleSettings({ ...scheduleSettings, matchupsPerPeriod: parseInt(e.target.value) })}
+                                className="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 focus:outline-none focus:border-blue-500"
+                              >
+                                <option value={1}>1</option>
+                              </select>
+                            </div>
+                          </div>
                         </div>
                       )}
                       

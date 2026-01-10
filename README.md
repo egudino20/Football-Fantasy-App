@@ -73,7 +73,7 @@ League creators (commissioners) can configure their league settings. Users who j
   - **General** - League name, join ID/password (auto-generated), join URL, scoring system description ✅
   - **Teams and Schedules** - Nested tabs: ✅
     - **Teams** - Invite managers via email, manage team roster, view invitation status ✅
-    - Schedule - Schedule configuration (placeholder)
+    - **Schedule** - Season dates, league average opponent setting, matchups per period ✅
     - Playoffs - Playoffs configuration (placeholder)
     - Matchups - Matchups configuration (placeholder)
   - Player Pool - Available players for the league (placeholder)
@@ -119,6 +119,7 @@ League creators (commissioners) can configure their league settings. Users who j
      - Checkbox becomes disabled once invitation is sent
      - Remove teams using ✕ button (except commissioner)
    - Click other sub-tabs to switch views (placeholders)
+     - Schedule: Set season start/end dates, league average opponent option, matchups per period
 6. Test action buttons:
    - Click "Save" - marks tab as completed
    - Click "Save and Continue" - saves and moves to next tab
