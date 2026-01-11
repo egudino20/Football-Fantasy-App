@@ -72,9 +72,9 @@ League creators (commissioners) can configure their league settings. Users who j
 - Tab navigation system with 8 setup sections:
   - **General** - League name, join ID/password (auto-generated), join URL, scoring system description ✅
   - **Teams and Schedules** - Nested tabs: ✅
-    - **Teams** - Invite managers via email, manage team roster, view invitation status ✅
+    - **Teams** - Invite managers via email, manage team roster with multiple owners support, view invitation status ✅
     - **Schedule** - Season dates, league average opponent setting, matchups per period ✅
-    - Playoffs - Playoffs configuration (placeholder)
+    - **Playoffs** - Enable/disable playoffs, select last regular season matchweek, configure playoff teams ✅
     - Matchups - Matchups configuration (placeholder)
   - Player Pool - Available players for the league (placeholder)
   - Rosters - Team roster configuration (placeholder)
@@ -112,14 +112,22 @@ League creators (commissioners) can configure their league settings. Users who j
      - See join link with copy button
      - Set maximum number of teams (dropdown 4-20)
      - Click "Add Team" button above table to add new team rows
-     - Fill in team name, abbreviation (max 4 chars), and manager email
-     - Check "Send Invitation" boxes for teams you want to invite (requires email)
+     - Fill in team name, abbreviation (max 4 chars), and manager email(s)
+     - Click "+" button in Add Owner column to add multiple owners per team
+     - Each owner has their own email field with remove (✕) button
+     - Check "Send Invitation" boxes for teams you want to invite (requires at least one email)
      - Click "Send Email Invitations & Save" to send all checked invitations
      - Watch "Invitation Sent" column change to "Yes" for checked teams
      - Checkbox becomes disabled once invitation is sent
      - Remove teams using ✕ button (except commissioner)
-   - Click other sub-tabs to switch views (placeholders)
-     - Schedule: Set season start/end dates, league average opponent option, matchups per period
+   - Click other sub-tabs to switch views:
+     - Schedule: Set season start/end dates, league average opponent option, matchups per period, unsaved changes warning
+     - Playoffs: 
+       - Enable playoffs checkbox (ends regular season earlier)
+       - Select last scoring period in regular season from dynamic dropdown (based on league matchweeks)
+       - Choose number of teams qualifying for playoffs (2-14, even numbers)
+       - View automatic playoff generation note
+       - Unsaved changes warning
 6. Test action buttons:
    - Click "Save" - marks tab as completed
    - Click "Save and Continue" - saves and moves to next tab

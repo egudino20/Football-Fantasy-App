@@ -24,6 +24,22 @@ function App() {
     useLeagueAverage: false,
     matchupsPerPeriod: 1,
   });
+  const [tempScheduleSettings, setTempScheduleSettings] = useState(null);
+  const [playoffsSettings, setPlayoffsSettings] = useState({
+    usePlayoffs: false,
+    lastRegularSeasonWeek: '',
+    playoffTeams: 4,
+  });
+  const [tempPlayoffsSettings, setTempPlayoffsSettings] = useState(null);
+
+  // League matchweek configuration
+  const leagueMatchweeks = {
+    epl: 38,
+    laliga: 38,
+    bundesliga: 34,
+    seriea: 38,
+    ligue1: 38,
+  };
   const [leagueData, setLeagueData] = useState({
     leagueType: '',
     leagueName: '',
@@ -81,6 +97,21 @@ function App() {
   };
 
   const handleBack = () => {
+    // Check for unsaved schedule changes
+    if (showLeagueSetup && activeTab === 'teams' && activeSubTab === 'schedule' && tempScheduleSettings) {
+      if (!window.confirm('You have unsaved changes in the Schedule tab. Are you sure you want to leave without saving?')) {
+        return;
+      }
+      setTempScheduleSettings(null);
+    }
+    // Check for unsaved playoffs changes
+    if (showLeagueSetup && activeTab === 'teams' && activeSubTab === 'playoffs' && tempPlayoffsSettings) {
+      if (!window.confirm('You have unsaved changes in the Playoffs tab. Are you sure you want to leave without saving?')) {
+        return;
+      }
+      setTempPlayoffsSettings(null);
+    }
+    
     if (showLeagueSetup) {
       setShowLeagueSetup(false);
       setActiveTab('general');
@@ -196,7 +227,7 @@ function App() {
             id: 'commissioner',
             teamName: currentLeague.teamName,
             teamAbbreviation: currentLeague.teamName.substring(0, 4).toUpperCase(),
-            managerEmail: 'commissioner@league.com', // Placeholder until auth is implemented
+            owners: [{ id: 'commissioner-owner', email: 'commissioner@league.com' }], // Changed to array
             sendInvitation: false,
             invitationSent: true,
             joinedLeague: true,
@@ -213,6 +244,12 @@ function App() {
         useLeagueAverage: currentLeague.settings?.schedule?.useLeagueAverage || false,
         matchupsPerPeriod: currentLeague.settings?.schedule?.matchupsPerPeriod || 1,
       });
+      // Initialize playoffs settings
+      setPlayoffsSettings({
+        usePlayoffs: currentLeague.settings?.playoffs?.usePlayoffs || false,
+        lastRegularSeasonWeek: currentLeague.settings?.playoffs?.lastRegularSeasonWeek || '',
+        playoffTeams: currentLeague.settings?.playoffs?.playoffTeams || 4,
+      });
     }
   };
 
@@ -221,6 +258,17 @@ function App() {
   };
 
   const handleSaveSettings = () => {
+    // For schedule tab, save temp settings to actual settings
+    if (activeTab === 'teams' && activeSubTab === 'schedule' && tempScheduleSettings) {
+      setScheduleSettings(tempScheduleSettings);
+      setTempScheduleSettings(null);
+    }
+    // For playoffs tab, save temp settings to actual settings
+    if (activeTab === 'teams' && activeSubTab === 'playoffs' && tempPlayoffsSettings) {
+      setPlayoffsSettings(tempPlayoffsSettings);
+      setTempPlayoffsSettings(null);
+    }
+    
     // Mark current tab as completed
     setCompletedTabs(prev => new Set([...prev, activeTab]));
     
@@ -235,7 +283,10 @@ function App() {
       updatedSettings.teams = teamsSettings;
     }
     if (activeTab === 'teams' && activeSubTab === 'schedule') {
-      updatedSettings.schedule = scheduleSettings;
+      updatedSettings.schedule = tempScheduleSettings || scheduleSettings;
+    }
+    if (activeTab === 'teams' && activeSubTab === 'playoffs') {
+      updatedSettings.playoffs = tempPlayoffsSettings || playoffsSettings;
     }
     
     setLeagueSettings(updatedSettings);
@@ -296,7 +347,7 @@ function App() {
       id: Date.now().toString(),
       teamName: '',
       teamAbbreviation: '',
-      managerEmail: '',
+      owners: [{ id: Date.now().toString(), email: '' }], // Changed to array of owners
       sendInvitation: false,
       invitationSent: false,
       joinedLeague: false,
@@ -306,6 +357,44 @@ function App() {
       ...teamsSettings,
       teams: [...teamsSettings.teams, newTeam],
     });
+  };
+
+  const handleAddOwner = (teamId) => {
+    const updatedTeams = teamsSettings.teams.map(team => {
+      if (team.id === teamId) {
+        const newOwner = { id: Date.now().toString(), email: '' };
+        return {
+          ...team,
+          owners: [...(team.owners || [{ id: 'default', email: team.managerEmail || '' }]), newOwner]
+        };
+      }
+      return team;
+    });
+    setTeamsSettings({ ...teamsSettings, teams: updatedTeams });
+  };
+
+  const handleRemoveOwner = (teamId, ownerId) => {
+    const updatedTeams = teamsSettings.teams.map(team => {
+      if (team.id === teamId) {
+        const updatedOwners = team.owners.filter(owner => owner.id !== ownerId);
+        return { ...team, owners: updatedOwners.length > 0 ? updatedOwners : [{ id: Date.now().toString(), email: '' }] };
+      }
+      return team;
+    });
+    setTeamsSettings({ ...teamsSettings, teams: updatedTeams });
+  };
+
+  const handleOwnerEmailChange = (teamId, ownerId, email) => {
+    const updatedTeams = teamsSettings.teams.map(team => {
+      if (team.id === teamId) {
+        const updatedOwners = team.owners.map(owner =>
+          owner.id === ownerId ? { ...owner, email } : owner
+        );
+        return { ...team, owners: updatedOwners };
+      }
+      return team;
+    });
+    setTeamsSettings({ ...teamsSettings, teams: updatedTeams });
   };
 
   const handleRemoveTeam = (teamId) => {
@@ -327,7 +416,8 @@ function App() {
   const handleSendInvitations = () => {
     // Send invitations only to teams with checked boxes
     const updatedTeams = teamsSettings.teams.map(team => {
-      if (team.managerEmail && team.sendInvitation && !team.invitationSent && !team.isCommissioner) {
+      const hasEmails = team.owners && team.owners.some(owner => owner.email);
+      if (hasEmails && team.sendInvitation && !team.invitationSent && !team.isCommissioner) {
         // TODO: Backend API call to send email invitation
         return { ...team, invitationSent: true };
       }
@@ -347,8 +437,9 @@ function App() {
   const handleToggleSendInvitation = (teamId) => {
     const team = teamsSettings.teams.find(t => t.id === teamId);
     
-    if (!team?.managerEmail) {
-      alert('Please enter an email address first');
+    const hasEmails = team?.owners && team.owners.some(owner => owner.email);
+    if (!hasEmails) {
+      alert('Please enter at least one email address first');
       return;
     }
     
@@ -617,19 +708,35 @@ function App() {
               {/* Tab Navigation */}
               <div className="bg-slate-800 border border-slate-700 rounded-lg mb-6 overflow-x-auto">
                 <div className="flex">
-                  {setupTabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`px-6 py-4 text-sm font-medium whitespace-nowrap transition ${
-                        activeTab === tab.id
-                          ? 'bg-slate-700 text-white border-b-2 border-blue-500'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-750'
-                      }`}
-                    >
-                      {tab.name}
-                    </button>
-                  ))}
+              {setupTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    // Check for unsaved schedule changes before switching tabs
+                    if (activeTab === 'teams' && activeSubTab === 'schedule' && tempScheduleSettings) {
+                      if (!window.confirm('You have unsaved changes in the Schedule tab. Are you sure you want to leave without saving?')) {
+                        return;
+                      }
+                      setTempScheduleSettings(null);
+                    }
+                    // Check for unsaved playoffs changes before switching tabs
+                    if (activeTab === 'teams' && activeSubTab === 'playoffs' && tempPlayoffsSettings) {
+                      if (!window.confirm('You have unsaved changes in the Playoffs tab. Are you sure you want to leave without saving?')) {
+                        return;
+                      }
+                      setTempPlayoffsSettings(null);
+                    }
+                    setActiveTab(tab.id);
+                  }}
+                  className={`px-6 py-4 text-sm font-medium whitespace-nowrap transition ${
+                    activeTab === tab.id
+                      ? 'bg-slate-700 text-white border-b-2 border-blue-500'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-750'
+                  }`}
+                >
+                  {tab.name}
+                </button>
+              ))}
                 </div>
               </div>
 
@@ -751,7 +858,23 @@ function App() {
                       {teamsSubTabs.map((subTab) => (
                         <button
                           key={subTab.id}
-                          onClick={() => setActiveSubTab(subTab.id)}
+                          onClick={() => {
+                            // Check for unsaved schedule changes before switching sub-tabs
+                            if (activeSubTab === 'schedule' && tempScheduleSettings) {
+                              if (!window.confirm('You have unsaved changes in the Schedule tab. Are you sure you want to leave without saving?')) {
+                                return;
+                              }
+                              setTempScheduleSettings(null);
+                            }
+                            // Check for unsaved playoffs changes before switching sub-tabs
+                            if (activeSubTab === 'playoffs' && tempPlayoffsSettings) {
+                              if (!window.confirm('You have unsaved changes in the Playoffs tab. Are you sure you want to leave without saving?')) {
+                                return;
+                              }
+                              setTempPlayoffsSettings(null);
+                            }
+                            setActiveSubTab(subTab.id);
+                          }}
                           className={`flex-1 px-4 py-2 text-sm font-medium rounded transition ${
                             activeSubTab === subTab.id
                               ? 'bg-slate-600 text-white'
@@ -837,7 +960,7 @@ function App() {
                                   <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-left">Add Owner</th>
                                   <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-left">Team Name</th>
                                   <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-left">Team Abbreviation</th>
-                                  <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-left">Manager Email</th>
+                                  <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-left">Manager Email(s)</th>
                                   <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-center">Invitation Sent</th>
                                   <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-center">Joined League</th>
                                   <th className="border border-slate-600 px-3 py-2 text-sm font-semibold text-center">Send Invitation</th>
@@ -845,88 +968,112 @@ function App() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {teamsSettings.teams.map((team, index) => (
-                                  <tr key={team.id} className={team.isCommissioner ? 'bg-yellow-900 bg-opacity-20' : index % 2 === 0 ? 'bg-slate-800' : 'bg-slate-750'}>
-                                    <td className="border border-slate-600 px-3 py-2 text-center">
-                                      {team.isCommissioner && (
-                                        <span className="text-sm font-semibold text-yellow-400">Commissioner</span>
-                                      )}
-                                    </td>
-                                    <td className="border border-slate-600 px-3 py-2">
-                                      <input
-                                        type="text"
-                                        value={team.teamName}
-                                        onChange={(e) => handleTeamChange(team.id, 'teamName', e.target.value)}
-                                        disabled={team.isCommissioner}
-                                        className={`w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm ${
-                                          team.isCommissioner ? 'bg-yellow-900 bg-opacity-20 cursor-not-allowed' : ''
-                                        }`}
-                                        placeholder="Team name"
-                                      />
-                                    </td>
-                                    <td className="border border-slate-600 px-3 py-2">
-                                      <input
-                                        type="text"
-                                        value={team.teamAbbreviation}
-                                        onChange={(e) => handleTeamChange(team.id, 'teamAbbreviation', e.target.value)}
-                                        disabled={team.isCommissioner}
-                                        maxLength={4}
-                                        className={`w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm ${
-                                          team.isCommissioner ? 'bg-yellow-900 bg-opacity-20 cursor-not-allowed' : ''
-                                        }`}
-                                        placeholder="ABBR"
-                                      />
-                                    </td>
-                                    <td className="border border-slate-600 px-3 py-2">
-                                      <input
-                                        type="email"
-                                        value={team.managerEmail}
-                                        onChange={(e) => handleTeamChange(team.id, 'managerEmail', e.target.value)}
-                                        disabled={team.isCommissioner}
-                                        className={`w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm ${
-                                          team.isCommissioner ? 'bg-yellow-900 bg-opacity-20 cursor-not-allowed' : ''
-                                        }`}
-                                        placeholder="email@example.com"
-                                      />
-                                    </td>
-                                    <td className="border border-slate-600 px-3 py-2 text-center text-sm">
-                                      {team.invitationSent ? 'Yes' : 'No'}
-                                    </td>
-                                    <td className="border border-slate-600 px-3 py-2 text-center text-sm">
-                                      {team.joinedLeague ? 'Yes' : 'No'}
-                                    </td>
-                                    <td className="border border-slate-600 px-3 py-2 text-center">
-                                      {team.isCommissioner ? (
+                                {teamsSettings.teams.map((team, index) => {
+                                  const owners = team.owners || [{ id: 'default', email: team.managerEmail || '' }];
+                                  return (
+                                    <tr key={team.id} className={team.isCommissioner ? 'bg-yellow-900 bg-opacity-20' : index % 2 === 0 ? 'bg-slate-800' : 'bg-slate-750'}>
+                                      <td className="border border-slate-600 px-3 py-2 text-center">
+                                        {team.isCommissioner ? (
+                                          <span className="text-sm font-semibold text-yellow-400">Commissioner</span>
+                                        ) : (
+                                          <button
+                                            onClick={() => handleAddOwner(team.id)}
+                                            className="w-6 h-6 rounded-full bg-green-600 hover:bg-green-700 text-white flex items-center justify-center mx-auto transition"
+                                          >
+                                            +
+                                          </button>
+                                        )}
+                                      </td>
+                                      <td className="border border-slate-600 px-3 py-2">
                                         <input
-                                          type="checkbox"
-                                          checked={false}
-                                          disabled
-                                          className="w-4 h-4 cursor-not-allowed opacity-50"
-                                        />
-                                      ) : (
-                                        <input
-                                          type="checkbox"
-                                          checked={team.sendInvitation || false}
-                                          disabled={!team.managerEmail || team.invitationSent}
-                                          onChange={() => handleToggleSendInvitation(team.id)}
-                                          className={`w-4 h-4 ${
-                                            !team.managerEmail || team.invitationSent ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                                          type="text"
+                                          value={team.teamName}
+                                          onChange={(e) => handleTeamChange(team.id, 'teamName', e.target.value)}
+                                          disabled={team.isCommissioner}
+                                          className={`w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm ${
+                                            team.isCommissioner ? 'bg-yellow-900 bg-opacity-20 cursor-not-allowed' : ''
                                           }`}
+                                          placeholder="Team name"
                                         />
-                                      )}
-                                    </td>
-                                    <td className="border border-slate-600 px-3 py-2 text-center">
-                                      {!team.isCommissioner && (
-                                        <button
-                                          onClick={() => handleRemoveTeam(team.id)}
-                                          className="text-red-500 hover:text-red-400 text-xl font-bold transition"
-                                        >
-                                          ✕
-                                        </button>
-                                      )}
-                                    </td>
-                                  </tr>
-                                ))}
+                                      </td>
+                                      <td className="border border-slate-600 px-3 py-2">
+                                        <input
+                                          type="text"
+                                          value={team.teamAbbreviation}
+                                          onChange={(e) => handleTeamChange(team.id, 'teamAbbreviation', e.target.value)}
+                                          disabled={team.isCommissioner}
+                                          maxLength={4}
+                                          className={`w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm ${
+                                            team.isCommissioner ? 'bg-yellow-900 bg-opacity-20 cursor-not-allowed' : ''
+                                          }`}
+                                          placeholder="ABBR"
+                                        />
+                                      </td>
+                                      <td className="border border-slate-600 px-3 py-2">
+                                        <div className="space-y-2">
+                                          {owners.map((owner, ownerIndex) => (
+                                            <div key={owner.id} className="flex gap-2 items-center">
+                                              <input
+                                                type="email"
+                                                value={owner.email}
+                                                onChange={(e) => handleOwnerEmailChange(team.id, owner.id, e.target.value)}
+                                                disabled={team.isCommissioner}
+                                                className={`flex-1 bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm ${
+                                                  team.isCommissioner ? 'bg-yellow-900 bg-opacity-20 cursor-not-allowed' : ''
+                                                }`}
+                                                placeholder={`Owner ${ownerIndex + 1} email`}
+                                              />
+                                              {!team.isCommissioner && owners.length > 1 && (
+                                                <button
+                                                  onClick={() => handleRemoveOwner(team.id, owner.id)}
+                                                  className="text-red-500 hover:text-red-400 text-sm font-bold transition"
+                                                >
+                                                  ✕
+                                                </button>
+                                              )}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </td>
+                                      <td className="border border-slate-600 px-3 py-2 text-center text-sm">
+                                        {team.invitationSent ? 'Yes' : 'No'}
+                                      </td>
+                                      <td className="border border-slate-600 px-3 py-2 text-center text-sm">
+                                        {team.joinedLeague ? 'Yes' : 'No'}
+                                      </td>
+                                      <td className="border border-slate-600 px-3 py-2 text-center">
+                                        {team.isCommissioner ? (
+                                          <input
+                                            type="checkbox"
+                                            checked={false}
+                                            disabled
+                                            className="w-4 h-4 cursor-not-allowed opacity-50"
+                                          />
+                                        ) : (
+                                          <input
+                                            type="checkbox"
+                                            checked={team.sendInvitation || false}
+                                            disabled={!owners.some(o => o.email) || team.invitationSent}
+                                            onChange={() => handleToggleSendInvitation(team.id)}
+                                            className={`w-4 h-4 ${
+                                              !owners.some(o => o.email) || team.invitationSent ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                                            }`}
+                                          />
+                                        )}
+                                      </td>
+                                      <td className="border border-slate-600 px-3 py-2 text-center">
+                                        {!team.isCommissioner && (
+                                          <button
+                                            onClick={() => handleRemoveTeam(team.id)}
+                                            className="text-red-500 hover:text-red-400 text-xl font-bold transition"
+                                          >
+                                            ✕
+                                          </button>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
                               </tbody>
                             </table>
                           </div>
@@ -937,6 +1084,13 @@ function App() {
                         <div>
                           <h3 className="text-lg font-semibold mb-4">Schedule Configuration</h3>
                           
+                          {/* Warning Message */}
+                          <div className="bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-lg p-3 mb-6">
+                            <p className="text-sm text-yellow-200">
+                              <strong>⚠️ Important:</strong> If you make any changes to this tab, you must save them before going to the next tab(s).
+                            </p>
+                          </div>
+                          
                           <div className="space-y-6 max-w-2xl">
                             {/* Start Date */}
                             <div>
@@ -946,8 +1100,11 @@ function App() {
                               <input
                                 type="date"
                                 id="startDate"
-                                value={scheduleSettings.startDate}
-                                onChange={(e) => setScheduleSettings({ ...scheduleSettings, startDate: e.target.value })}
+                                value={tempScheduleSettings?.startDate || scheduleSettings.startDate}
+                                onChange={(e) => setTempScheduleSettings({
+                                  ...(tempScheduleSettings || scheduleSettings),
+                                  startDate: e.target.value
+                                })}
                                 className="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 focus:outline-none focus:border-blue-500"
                               />
                               <p className="text-xs text-slate-400 mt-1">Defaults to August 1st of the current year</p>
@@ -961,8 +1118,11 @@ function App() {
                               <input
                                 type="date"
                                 id="endDate"
-                                value={scheduleSettings.endDate}
-                                onChange={(e) => setScheduleSettings({ ...scheduleSettings, endDate: e.target.value })}
+                                value={tempScheduleSettings?.endDate || scheduleSettings.endDate}
+                                onChange={(e) => setTempScheduleSettings({
+                                  ...(tempScheduleSettings || scheduleSettings),
+                                  endDate: e.target.value
+                                })}
                                 className="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 focus:outline-none focus:border-blue-500"
                               />
                               <p className="text-xs text-slate-400 mt-1">Defaults to May 31st of the next year</p>
@@ -973,8 +1133,11 @@ function App() {
                               <label className="flex items-start gap-3">
                                 <input
                                   type="checkbox"
-                                  checked={scheduleSettings.useLeagueAverage}
-                                  onChange={(e) => setScheduleSettings({ ...scheduleSettings, useLeagueAverage: e.target.checked })}
+                                  checked={tempScheduleSettings?.useLeagueAverage || scheduleSettings.useLeagueAverage}
+                                  onChange={(e) => setTempScheduleSettings({
+                                    ...(tempScheduleSettings || scheduleSettings),
+                                    useLeagueAverage: e.target.checked
+                                  })}
                                   className="mt-1 w-4 h-4 cursor-pointer"
                                 />
                                 <div>
@@ -994,8 +1157,11 @@ function App() {
                               </label>
                               <select
                                 id="matchupsPerPeriod"
-                                value={scheduleSettings.matchupsPerPeriod}
-                                onChange={(e) => setScheduleSettings({ ...scheduleSettings, matchupsPerPeriod: parseInt(e.target.value) })}
+                                value={tempScheduleSettings?.matchupsPerPeriod || scheduleSettings.matchupsPerPeriod}
+                                onChange={(e) => setTempScheduleSettings({
+                                  ...(tempScheduleSettings || scheduleSettings),
+                                  matchupsPerPeriod: parseInt(e.target.value)
+                                })}
                                 className="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 focus:outline-none focus:border-blue-500"
                               >
                                 <option value={1}>1</option>
@@ -1007,8 +1173,119 @@ function App() {
                       
                       {activeSubTab === 'playoffs' && (
                         <div>
-                          <h3 className="text-lg font-semibold mb-3">Playoffs Configuration</h3>
-                          <p className="text-slate-400">Content coming soon...</p>
+                          <h3 className="text-lg font-semibold mb-4">Playoffs Configuration</h3>
+                          
+                          {/* Warning Message */}
+                          <div className="bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-lg p-3 mb-6">
+                            <p className="text-sm text-yellow-200">
+                              <strong>⚠️ Important:</strong> If you make any changes to this tab, you must save them before going to the next tab(s).
+                            </p>
+                          </div>
+                          
+                          <div className="space-y-6 max-w-2xl">
+                            {/* Use Playoffs Checkbox */}
+                            <div>
+                              <label className="flex items-start gap-3">
+                                <input
+                                  type="checkbox"
+                                  checked={tempPlayoffsSettings?.usePlayoffs ?? playoffsSettings.usePlayoffs}
+                                  onChange={(e) => setTempPlayoffsSettings({
+                                    ...(tempPlayoffsSettings || playoffsSettings),
+                                    usePlayoffs: e.target.checked
+                                  })}
+                                  className="mt-1 w-4 h-4 cursor-pointer"
+                                />
+                                <div>
+                                  <span className="block text-sm font-medium">Use playoffs</span>
+                                  <p className="text-xs text-slate-400 mt-1">
+                                    If this is checked, your head-to-head league will have playoffs. The regular season will 
+                                    therefore end earlier (configurable on Matchups tab).
+                                  </p>
+                                </div>
+                              </label>
+                            </div>
+
+                            {/* Information Note */}
+                            <div className="bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg p-4">
+                              <p className="text-sm text-blue-200">
+                                <strong>ℹ️ Note:</strong> This setting is unrelated to the postseason (if any) of the real sport league. 
+                                Your fantasy league playoffs are independent from the actual football league's playoff schedule.
+                              </p>
+                            </div>
+
+                            {/* Conditional Playoff Settings */}
+                            {(tempPlayoffsSettings?.usePlayoffs ?? playoffsSettings.usePlayoffs) && (
+                              <>
+                                {/* Last Regular Season Week */}
+                                <div>
+                                  <label htmlFor="lastRegularSeasonWeek" className="block text-sm font-medium mb-2">
+                                    Select last scoring period in regular season:
+                                  </label>
+                                  <select
+                                    id="lastRegularSeasonWeek"
+                                    value={tempPlayoffsSettings?.lastRegularSeasonWeek || playoffsSettings.lastRegularSeasonWeek}
+                                    onChange={(e) => setTempPlayoffsSettings({
+                                      ...(tempPlayoffsSettings || playoffsSettings),
+                                      lastRegularSeasonWeek: e.target.value
+                                    })}
+                                    className="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 focus:outline-none focus:border-blue-500"
+                                  >
+                                    <option value="">Select matchweek...</option>
+                                    {currentLeague && (() => {
+                                      const totalWeeks = leagueMatchweeks[currentLeague.competition] || 38;
+                                      const maxWeek = totalWeeks - 1;
+                                      return Array.from({ length: maxWeek }, (_, i) => i + 1).map(week => {
+                                        // Static but flexible date calculation - to be replaced with dynamic data
+                                        const startDate = new Date(2026, 7, 1); // Aug 1, 2026
+                                        const weekStart = new Date(startDate);
+                                        weekStart.setDate(startDate.getDate() + (week - 1) * 7);
+                                        const weekEnd = new Date(weekStart);
+                                        weekEnd.setDate(weekStart.getDate() + 6);
+                                        
+                                        return (
+                                          <option key={week} value={week}>
+                                            Matchweek {week} ({weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})
+                                          </option>
+                                        );
+                                      });
+                                    })()}
+                                  </select>
+                                  <p className="text-xs text-slate-400 mt-1">
+                                    Maximum allowed: Matchweek {currentLeague ? leagueMatchweeks[currentLeague.competition] - 1 : 37}
+                                  </p>
+                                </div>
+
+                                {/* Number of Playoff Teams */}
+                                <div>
+                                  <label htmlFor="playoffTeams" className="block text-sm font-medium mb-2">
+                                    Number of teams qualifying for playoffs:
+                                  </label>
+                                  <select
+                                    id="playoffTeams"
+                                    value={tempPlayoffsSettings?.playoffTeams || playoffsSettings.playoffTeams}
+                                    onChange={(e) => setTempPlayoffsSettings({
+                                      ...(tempPlayoffsSettings || playoffsSettings),
+                                      playoffTeams: parseInt(e.target.value)
+                                    })}
+                                    className="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 focus:outline-none focus:border-blue-500"
+                                  >
+                                    {[2, 4, 6, 8, 10, 12, 14].map(num => (
+                                      <option key={num} value={num}>{num}</option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                {/* Playoff Generation Note */}
+                                <div className="bg-green-900 bg-opacity-30 border border-green-700 rounded-lg p-4">
+                                  <p className="text-sm text-green-200">
+                                    <strong>✓ Playoff Generation:</strong> Playoff matchups will be automatically generated based on league position. 
+                                    Higher seeded teams will receive a bye to the next playoff round if there are not enough teams to fill 
+                                    matchups for a playoff round.
+                                  </p>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
                       )}
                       
